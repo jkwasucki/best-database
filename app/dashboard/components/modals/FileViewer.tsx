@@ -242,10 +242,10 @@ export default function FileViewer({isfileViewerVisible,refetchFilesRef,promise}
        {files && 
         <>
             <div onClick={()=>handleArrowClick('ArrowLeft')} className='fixed left-0 top-1/2 z-50'>
-                <IoIosArrowBack size={30} className='rounded-full w-max hover:bg-neutral-600 cursor-pointer text-white'/>
+                <IoIosArrowBack size={30} className='rounded-full hover:bg-neutral-600 cursor-pointer text-white'/>
             </div>
             <div onClick={()=>handleArrowClick('ArrowRight')} className='fixed right-0 top-1/2 z-50'>
-                <IoIosArrowForward size={30} className='rounded-full w-max hover:bg-neutral-600 cursor-pointer text-white'/>
+                <IoIosArrowForward size={30} className='rounded-full hover:bg-neutral-600 cursor-pointer text-white'/>
             </div>
         </>
         }
