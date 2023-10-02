@@ -82,14 +82,14 @@ export default function File({promise}:Props) {
             <div className='relative w-[230px] h-[200px] rounded-md flex items-center justify-center'>
               {file.type === 'audio' && 
                 <>
-                  <div className='w-full h-full bg-white flex items-center justify-center'>
+                  <div className='absolute w-full h-full bg-white flex items-center justify-center'>
                       <BsFileEarmarkMusicFill size={40} className='text-blue-500'/>
                   </div>
                 </>
               }
               {file.type === 'text' || file.type === 'application' && 
                 <>
-                  <div className='w-full h-full bg-white flex items-center justify-center'>
+                  <div className='absolute w-full h-full bg-white flex items-center justify-center'>
                     <ImFileText2 size={40} className='opacity-50' />
                   </div>
                 </>
@@ -102,7 +102,7 @@ export default function File({promise}:Props) {
                   alt="file"
                 />
               }
-              {file.type === 'video' &&  
+              {/* {file.type === 'video' &&  
                 <>
                   <div className='absolute bg-slate-800 opacity-[0.6] w-full h-full flex items-center justify-center'/>
                   <AiFillPlayCircle 
@@ -118,7 +118,7 @@ export default function File({promise}:Props) {
                     Your browser does not support the video tag.
                   </video>
                 </>
-              }
+              } */}
             </div>
           </div>
           )
