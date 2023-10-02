@@ -10,9 +10,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createAlert } from '@/redux/alertSlice';
 import { RootState } from '@/redux/store';
 import { SiAiqfome } from 'react-icons/si';
-import CreateCollection from './CreateCollection';
+import CreateCollection from './modals/CreateCollection';
 import { BsFolder, BsFolderFill } from 'react-icons/bs';
-import DeleteWarning from '../collections/[userId]/[collectionId]/components/DeleteWarning';
+import DeleteWarning from '../collections/[userId]/[collectionId]/components/modals/DeleteWarning';
 
 type Props = {
   refetchRef: Function;
@@ -159,7 +159,7 @@ export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) 
                                     >
                                     <Link
                                         href={`/dashboard/collections/${session?._id}/${collection._id}`}
-                                        className="relative flex items-center gap-3 relative w-[90%]"
+                                        className="flex items-center gap-3 relative w-[90%]"
                                         >
                                         {/* Its not your folder so it is shared to you */}
                                         {session._id.length > 0 && collection.owner !== session?._id ? (

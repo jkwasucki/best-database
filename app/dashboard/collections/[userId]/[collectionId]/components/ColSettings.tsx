@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 import { AiOutlineCheck, AiOutlineClose, AiOutlineSound } from 'react-icons/ai'
 import { SlOptionsVertical } from 'react-icons/sl'
-import DeleteWarning from './DeleteWarning'
+import DeleteWarning from './modals/DeleteWarning'
 import {FcShare} from 'react-icons/fc'
 import { useDispatch, useSelector } from 'react-redux'
 import { createAlert } from '@/redux/alertSlice'
@@ -191,7 +191,7 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
                             <span className='font-semibold'> {owner?.user?.email}</span>
                         </p>
                     }
-                    <p className='absolute group-hover:block hidden px-2 shadow w-max flex justify-center bg-white rounded-xl z-10'>Collection name</p>
+                    <p className='absolute group-hover:block hidden px-2 shadow w-max justify-center bg-white rounded-xl z-10'>Collection name</p>
                 </div>
                 {!owner?.isOwner && 
                     <FcShare 

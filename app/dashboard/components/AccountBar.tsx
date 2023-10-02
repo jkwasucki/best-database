@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Avatar from "boring-avatars";
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import AccountModal from './AccountModal';
+import AccountModal from './modals/AccountModal';
 import axios from 'axios';
 
 export default function AccountBar() {

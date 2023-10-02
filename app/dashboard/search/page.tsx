@@ -7,7 +7,7 @@ import { MdInsertPhoto, MdMovie, MdOutlineFindReplace } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { referenceFile } from "@/redux/fileSlice";
-import FileViewer from "../components/FileViewer";
+import FileViewer from "../components/modals/FileViewer";
 import { updateCollectionId } from "@/redux/collectionSlice";
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from "next/navigation";

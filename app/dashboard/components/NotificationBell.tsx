@@ -66,7 +66,7 @@ export default function NotificationBell({refetchRef,areNotifiExtended}:Props) {
                         animate={{ opacity: 1, y: 30 }} // Animate to visible and original position
                         exit={{ opacity: 0, x: '100%' }} //When leaving the dom, animate out
                         transition={{ duration: 0.5, delay: index * 0.1 }}
-                        className={`${!notification.state.clicked && 'border border-[2px] border-slate-300' } flex flex-col bg-white rounded-2xl shadow-xl p-3 cursor-pointer`}
+                        className={`${!notification.state.clicked && 'border-[2px] border-slate-300' } flex flex-col bg-white rounded-2xl shadow-xl p-3 cursor-pointer`}
                         >
                         <div className='flex items-center justify-between'>
                             <p className='opacity-50 text-sm'>

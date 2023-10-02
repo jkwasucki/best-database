@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import {BsInfoCircle} from 'react-icons/bs'
 import {AiOutlineHome} from 'react-icons/ai'
 import Link from 'next/link'
-import InfoRotation from './InfoRotation'
 import { getCookie, setCookie } from 'cookies-next';
 import { hasCookie } from 'cookies-next';
 import { IoIosNotificationsOutline } from 'react-icons/io'
@@ -69,11 +68,6 @@ export default function NavbarLeft({isNavOpen}:Props) {
                     <BsInfoCircle size={20}/>
                     <p>Info</p>
                 </div>
-                {infoDismissed !== null && !infoDismissed && 
-                    <div className='flex flex-col p-3 py-5 border bg-white rounded-xl shadow-xl w-full h-max gap-3 sm:block hidden'>
-                       <InfoRotation dismiss={dismissToggler}/>
-                    </div>
-                }
             </div>
         </div>
     </motion.div>
