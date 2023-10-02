@@ -102,14 +102,14 @@ export default function File({promise}:Props) {
                   alt="file"
                 />
               }
-              {/* {file.type === 'video' &&  
+              {file.type === 'video' &&  
                 <>
                   <div className='absolute bg-slate-800 opacity-[0.6] w-full h-full flex items-center justify-center'/>
                   <AiFillPlayCircle 
                     size={50} 
-                    className='absolute text-white'
+                    className='absolute text-white z-10'
                   />
-                  <video className='w-[200px]'>
+                  <video className='absolute w-full h-full object-cover'>
                     <source 
                       src={file.url} 
                       type='video/mp4'
@@ -118,7 +118,7 @@ export default function File({promise}:Props) {
                     Your browser does not support the video tag.
                   </video>
                 </>
-              } */}
+              }
             </div>
           </div>
           )
