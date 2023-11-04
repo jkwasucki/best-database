@@ -6,12 +6,15 @@ import { getCookie, setCookie } from 'cookies-next';
 import { hasCookie } from 'cookies-next';
 import { IoIosNotificationsOutline } from 'react-icons/io'
 import { motion } from 'framer-motion'
+import { RootState } from '@/redux/store';
+import { useSelector } from 'react-redux';
 
 
 type Props = {
     isNavOpen?:Function
 }
 export default function NavbarLeft({isNavOpen}:Props) {
+    const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     
     const [infoDismissed,setInfoDismissed] = useState<boolean | null>(null)
     const [isMobileScreen, setIsMobileScreen] = useState(false)
@@ -56,11 +59,19 @@ export default function NavbarLeft({isNavOpen}:Props) {
         >
         <div className='w-full min-h-full flex-col text-neutral-900 flex'>
             <div className='flex mx-auto flex-col gap-6 text-[15px] items-center w-[200px] px-3 sm:mt-[40px]  bg-opacity-50'>
-                <Link href='/dashboard' onClick={()=>{isNavOpen && isNavOpen!()}} className='w-full flex justify-start items-center gap-4 cursor-pointer sm:hover:border-blue-200 sm:hover:bg-blue-100 sm:px-3 rounded-xl'>
+                <Link 
+                    href={`/dashboard/session/${session._id}`}
+                    onClick={()=>{isNavOpen && isNavOpen!()}} 
+                    className='w-full flex justify-start items-center gap-4 cursor-pointer sm:hover:border-blue-200 sm:hover:bg-blue-100 sm:px-3 rounded-xl'
+                >
                     <AiOutlineHome size={20}/>
                     <p>Home</p>
                 </Link>
-                <Link href='/dashboard/notifications' onClick={()=>isNavOpen && isNavOpen!()} className='w-full flex justify-start gap-4 cursor-pointer sm:hover:border-blue-200 sm:hover:bg-blue-100 sm:px-3 rounded-xl'>
+                <Link 
+                    href='/dashboard/notifications' 
+                    onClick={()=>isNavOpen && isNavOpen!()} 
+                    className='w-full flex justify-start gap-4 cursor-pointer sm:hover:border-blue-200 sm:hover:bg-blue-100 sm:px-3 rounded-xl'
+                >
                     <IoIosNotificationsOutline size={20}/>
                     <p>Notifications</p>
                 </Link>

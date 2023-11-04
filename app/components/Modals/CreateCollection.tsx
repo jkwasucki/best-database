@@ -5,17 +5,17 @@ import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { createAlert } from '@/redux/alertSlice';
 import { motion } from 'framer-motion';
+import { useDataContext } from '../Providers/DataContextProvider';
 
 type Props = {
-    isModalVisible:Function,
-    refetchRef:Function
+    toggler: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function CreateCollection({isModalVisible,refetchRef}:Props) {
+export default function CreateCollection({toggler}:Props) {
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
-    const dispatch = useDispatch()
-    const refetch = refetchRef
+    const { shakeData } = useDataContext()
 
+    const dispatch = useDispatch()
     const [collectionName,setCollectionName] = useState("")
     
     async function handleCollectionAdd() {
@@ -23,10 +23,9 @@ export default function CreateCollection({isModalVisible,refetchRef}:Props) {
             try {
                 await axios.post(`/api/user/collections/${session?._id}`, {
                     collection: collectionName,
-                });
-                //This refetch is passed in this order: Main --> CollectionTab --> this
-                refetch(true)
-                isModalVisible(false)
+                })
+                shakeData()
+                toggler(false)
             } catch (error: any) {
                 console.log(error)
                 dispatch(createAlert({type:"warning",text:error.response.data.error}))
@@ -55,7 +54,7 @@ export default function CreateCollection({isModalVisible,refetchRef}:Props) {
             <div className='flex justify-center'>
                 <div className='flex items-center gap-5'>
                     <button
-                        onClick={()=>isModalVisible(false)}
+                        onClick={()=>toggler(false)}
                         className='hover:bg-neutral-700 px-[20px] rounded-xl'
                         >
                         Cancel

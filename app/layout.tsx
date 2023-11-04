@@ -1,12 +1,12 @@
 'use client'
-import { StrictMode, useEffect } from 'react'
 import './globals.css'
-import AuthProvider from "./components/AuthProvider"
-import ReduxProvider from "./components/ReduxProvider"
+import AuthProvider from "./components/Authentication/AuthProvider"
+import ReduxProvider from "./components/Authentication/ReduxProvider"
 import { PersistGate } from 'redux-persist/es/integration/react';
 import { persistor } from "../redux/store";
 import { BrowserRouter } from "react-router-dom";
-import Notification from './dashboard/components/Alert';
+import Notification from './components/UtilCompnts/Alert';
+import { DataContextProvider } from './components/Providers/DataContextProvider';
 
 export default function RootLayout({
   children,
@@ -22,8 +22,10 @@ export default function RootLayout({
           <PersistGate loading={null} persistor={persistor}>
             <AuthProvider>
               <BrowserRouter>
-                <Notification/>
-                {children}
+                <DataContextProvider>
+                  <Notification/>
+                  {children}
+                </DataContextProvider>
               </BrowserRouter>
             </AuthProvider>
           </PersistGate>

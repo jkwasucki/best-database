@@ -5,27 +5,26 @@ import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import { AiFillCloseCircle } from 'react-icons/ai'
 import { useSelector } from 'react-redux'
+import { useDataContext } from '../Providers/DataContextProvider'
 
 
 type Props = {
-    refetchRef:Function,
+  
     areNotifiExtended:Function
 }
 
-export default function NotificationBell({refetchRef,areNotifiExtended}:Props) {
+export default function NotificationBell({areNotifiExtended}:Props) {
+    const { shouldRefetchData,shakeData } = useDataContext()
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
-    const refetch = refetchRef
     const [notifications,setNotifications] = useState<notifications[]>()
-    const [componentReRender,setComponentReRender] = useState(0)
+  
 
-    function handleComponentReRender(){
-        setComponentReRender(componentReRender + 1)
-    }
+  
 
     async function dismissNotification(notificationId:string){
         const notificationIndex = notifications?.findIndex((notification:notifications)=>notification._id === notificationId)
         notifications?.splice(notificationIndex!,1)
-        handleComponentReRender()
+        shakeData()
         await axios.post(`/api/user/handleNotifications/${session._id}`,{
                 action: "dismiss", notificationId:notificationId
         })
@@ -34,7 +33,7 @@ export default function NotificationBell({refetchRef,areNotifiExtended}:Props) {
     //Fetch notifications
     useEffect(()=>{
         async function fetchNotifications(){
-            const notifications = await axios.get(`/api/user/handleNotifications/${session._id}`)
+            const notifications = await axios.get(`http://localhost:3000/api/user/notifications/getNotifications/${session._id}`)
             const sortedNotifications = notifications.data.sort(
                 (a:notifications, b:notifications) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             ).filter((notification:notifications) => notification.state.dismissed === false);
@@ -48,7 +47,7 @@ export default function NotificationBell({refetchRef,areNotifiExtended}:Props) {
             await axios.post(`/api/user/handleNotifications/${session._id}`, {
                 action: "seen",
             }).then(()=>{
-                refetch(true)
+                shakeData()
             })
         }
         fetchNotifications()
@@ -90,7 +89,15 @@ export default function NotificationBell({refetchRef,areNotifiExtended}:Props) {
                     </motion.div>
                     )
                 })}
-               {notifications && notifications?.length > 0 && <Link href='/dashboard/notifications' onClick={()=>{refetch(true); areNotifiExtended(true)}} className='flex justify-end'>See all</Link>}
+               {notifications && notifications?.length > 0 && 
+                    <Link 
+                        href='/dashboard/notifications' 
+                        onClick={()=>{shakeData(); areNotifiExtended(true)}} 
+                        className='flex justify-end'
+                    >
+                        See all
+                    </Link>
+                }
             </AnimatePresence>
         </div>
        

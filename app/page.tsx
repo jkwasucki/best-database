@@ -1,5 +1,5 @@
 import { connectMongo } from "@/lib/connectMongo"
-import Authentication from "./components/Authentication"
+import Authentication from "./components/Authentication/Authentication"
 
 export default function Home() {
   connectMongo()

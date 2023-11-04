@@ -6,11 +6,11 @@ export { default } from "next-auth/middleware"
 export function middleware(request: NextRequest) {
   const { cookies } = request;
 
-  // Check if both cookies are not present
-  if (!cookies.has('token') && !cookies.has('next-auth.session-token')) {
-    // Redirect the user to landing page
-    return NextResponse.redirect('https://bestdb.vercel.app');
-  }
+  // // Check if both cookies are not present
+  // if (!cookies.has('token') && !cookies.has('next-auth.session-token')) {
+  //   // Redirect the user to landing page
+  //   return NextResponse.redirect('https://bestdb.vercel.app');
+  // }
 
   const res = NextResponse.next()
 

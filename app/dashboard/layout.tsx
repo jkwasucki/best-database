@@ -1,40 +1,59 @@
 'use client'
 import Cookies from 'js-cookie';
 import { AiOutlineLogout } from "react-icons/ai"
-import AccountBar from "./components/AccountBar"
-import Navbar from "./components/Navbar"
-import Search from "./components/Search"
+import AccountBar from "../components/UtilCompnts/AccountBar"
+import Navbar from "../components/Mains/Navbar"
+import Search from "../components/Mains/Search"
 import { useDispatch, useSelector } from "react-redux"
 import { signOut } from "next-auth/react"
-import { removeSession } from "@/redux/userSlice"
+import { createSession, removeSession } from "@/redux/userSlice"
 import { IoIosNotifications } from "react-icons/io"
 import { useEffect, useRef, useState } from "react"
-import axios from "axios"
 import { RootState } from "@/redux/store"
-import NotificationBell from "./components/NotificationBell"
-import Alert from "./components/Alert"
+import NotificationBell from "../components/UtilCompnts/NotificationBell"
+import Alert from "../components/UtilCompnts/Alert"
 import { HiOutlineMenuAlt2 } from "react-icons/hi"
 import { useRouter } from "next/navigation"
+import { getNotifications, handleNotifications } from '@/utils/handlers';
+import { clearCollectionData } from '@/redux/collectionSlice';
+import { useDataContext } from '@/app/components/Providers/DataContextProvider';
+
 export default function Layout({
   children,
 }: {
   children: React.ReactNode
 }) {
+    const { shouldRefetchData } = useDataContext()
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     const dispatch = useDispatch()
     const router = useRouter()
-    const [refetch,setRefetch] = useState(false)
+    
+    const [notifiExtended,setNotifiExtended] = useState(false)
     const [showNotifications,setShowNotifications] = useState(false)
     const [unsettledNotificationsCount,setUnsettledNotificationsCount] = useState(0)
     const [isMobileScreen,setIsMobileScreen] = useState(false)
     const [navOpen,setNavOpen] = useState(false)
-
-
-    function refetchUnsettled(refetch:boolean){
-        if(refetch) setRefetch(true)
-    }
-
     
+    
+    
+    //Push signed in user to redux store.
+    useEffect(() => {
+      if (session?._id) {
+        dispatch(createSession(session));
+      }
+    }, [session]);
+
+    //Clear collection data when navigating to home page.
+    useEffect(()=>{
+      dispatch(clearCollectionData({}))
+    },[])
+    
+    //Check if auth-token is present
+    useEffect(()=>{
+      const tokenValue = Cookies.get('token');
+      const nextAuthTokenValue = Cookies.get('next-auth.session-token')
+      if(!tokenValue && !nextAuthTokenValue) router.push('/')
+    },[])
 
     function handleLogout(){
         const tokenValue = Cookies.get('token');
@@ -56,14 +75,14 @@ export default function Layout({
     useEffect(()=>{
         async function fetchNotifications(){
             if(session._id.length > 0){
-                const notifications = await axios.get(`/api/user/handleNotifications/${session._id}`)
-                const unsettledNotifications = notifications.data.filter((notification:notifications)=>notification.state.seen === false)
+                const notifications = await getNotifications(session._id)
+                const unsettledNotifications = notifications?.data.filter((notification:notifications)=>notification.state.seen === false)
                 
                 setUnsettledNotificationsCount(unsettledNotifications.length)
             }
         }
         fetchNotifications()
-    },[refetch,session._id])
+    },[shouldRefetchData,session._id])
 
     //Device screen size tracker
     useEffect(()=>{
@@ -80,9 +99,7 @@ export default function Layout({
         setNavOpen(!navOpen);
       };
 
-    function handleNotifiExtented(status:boolean){
-        if(status) setShowNotifications(false)
-    }
+    
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     useEffect(()=>{
@@ -124,7 +141,6 @@ export default function Layout({
                             <Search/>
                             <AccountBar/>
                         </div>
-                        
                         <div className="relative flex items-center gap-2">
                             <IoIosNotifications 
                                 onClick={()=>setShowNotifications(!showNotifications)} 
@@ -136,7 +152,7 @@ export default function Layout({
                                     <p>{unsettledNotificationsCount < 9 ? unsettledNotificationsCount : "9+"}</p>
                                 </div>
                             }
-                            {showNotifications && <NotificationBell areNotifiExtended={handleNotifiExtented} refetchRef={refetchUnsettled}/>}
+                            {showNotifications && <NotificationBell areNotifiExtended={setNotifiExtended}/>}
                             <div className="bg-white rounded-full shadow border flex p-1 cursor-pointer">
                                 <AiOutlineLogout onClick={handleLogout} size={20} />
                             </div>

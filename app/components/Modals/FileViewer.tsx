@@ -18,30 +18,21 @@ import AudioContent from '../fileTypes/AudioContent'
 import TextContent from '../fileTypes/TextContent'
 import LoaderSVG from '../svgs/LoaderSVG'
 import { motion } from 'framer-motion'
+import { useDataContext } from '../Providers/DataContextProvider'
 
 type Props = {
-    isfileViewerVisible:Function,
-    refetchFilesRef?:Function,
-    promise?:Promise<mongoFileRef[]>
+    toggler:React.Dispatch<React.SetStateAction<boolean>>
+    files?:mongoFileRef[]
 }
 
-export default function FileViewer({isfileViewerVisible,refetchFilesRef,promise}:Props) {
-    const refetch = refetchFilesRef
+export default function FileViewer({toggler,files}:Props) {
+    const { shouldRefetchData,shakeData } = useDataContext()
+  
     const dispatch = useDispatch()
-
-    //Catch files promise
-    useEffect(()=>{
-        async function catchFiles(){
-            const files = await promise
-            setFiles(files!)
-        }
-        catchFiles()
-    },[promise])
 
     
     const referencedFile:mongoFileRef = useSelector((state:RootState)=>state.fileReducer.file)
     const referencedFileF = useSelector((state:RootState)=>state.fileReducer.for)
-    const [files,setFiles] = useState<mongoFileRef[] | null>(null)
     const [currentIndex,setCurrentIndex] = useState<number | null>(null)
 
     const collectionId = useSelector((state:RootState)=> state.collectionReducer.collection.collectionId)
@@ -63,7 +54,7 @@ export default function FileViewer({isfileViewerVisible,refetchFilesRef,promise}
                 setCurrentIndex(index);
             }
         }
-    },[referencedFile,files])
+    },[referencedFile,files,shouldRefetchData])
 
     //This function references a new file while arrows are pressed.
     //Dispatchers are using index of the file that is currently previewed, in an array of files.
@@ -78,28 +69,25 @@ export default function FileViewer({isfileViewerVisible,refetchFilesRef,promise}
 
         keyPressed = true
         
-            switch(e.key){
-                case "ArrowLeft":
-                    if(currentIndex === 0){
-                        dispatch(referenceFile({file:files?.[files.length - 1],for:"fileViewer"}))
-                        break
-                    }else if (files?.length !== 1) { // Check if files.length is not equal to 1
-                        dispatch(referenceFile({file:files?.[currentIndex! - 1],for:"fileViewer"}));
-                        break;
-                    }
-                case "ArrowRight":
-                    if(currentIndex === files?.length! - 1){
-                        dispatch(referenceFile({file:files?.[0],for:"fileViewer"}))
-                        break
-                    }else if (files?.length !== 1) { // Check if files.length is not equal to 1
-                        dispatch(referenceFile({file:files?.[currentIndex! + 1],for:"fileViewer"}));
-                        break;
-                    }
-            }
-            keyPressed = false
-       
-       
-       
+        switch(e.key){
+            case "ArrowLeft":
+                if(currentIndex === 0){
+                    dispatch(referenceFile({file:files?.[files.length - 1],for:"fileViewer"}))
+                    break
+                }else if (files?.length !== 1) { // Check if files.length is not equal to 1
+                    dispatch(referenceFile({file:files?.[currentIndex! - 1],for:"fileViewer"}));
+                    break;
+                }
+            case "ArrowRight":
+                if(currentIndex === files?.length! - 1){
+                    dispatch(referenceFile({file:files?.[0],for:"fileViewer"}))
+                    break
+                }else if (files?.length !== 1) { // Check if files.length is not equal to 1
+                    dispatch(referenceFile({file:files?.[currentIndex! + 1],for:"fileViewer"}));
+                    break;
+                }
+        }
+        keyPressed = false
     }
 
     function handleArrowClick(direction:string){
@@ -128,17 +116,17 @@ export default function FileViewer({isfileViewerVisible,refetchFilesRef,promise}
 
     //Closes options tab when name edit is initialized.
     useEffect(() => {
-      setExtendOptions(false)
+        setExtendOptions(false)
     }, [editName])
 
    
     async function handleName(file:mongoFileRef){
         try {
-            await axios.post(`/api/user/renameFile/${session._id}/${collectionId}`,{
+            await axios.post(`http://localhost:3000/api/user/renameFile/${session._id}/${collectionId}`,{
                 newName: newName,
                 fileId: file._id
             })
-            refetch!(true)
+            shakeData()
             const extension = file.name.split(".").pop()
             //File reference (fileSlice.ts)
             dispatch(setName({name:newName + "." + extension}))
@@ -189,7 +177,7 @@ export default function FileViewer({isfileViewerVisible,refetchFilesRef,promise}
         <div className='relative w-full flex items-center justify-between p-6 z-50'>
             <div className='flex items-center gap-5 text-xl'>
                 <BiArrowBack 
-                    onClick={()=>isfileViewerVisible(false)} 
+                    onClick={()=>toggler(false)} 
                     size={30} 
                     className='text-white cursor-pointer'
                 />

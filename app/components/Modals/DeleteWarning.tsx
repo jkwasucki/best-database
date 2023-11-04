@@ -1,13 +1,16 @@
 import { motion } from 'framer-motion'
-import React from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 
 type Props = {
-    isWarningVisible:Function,
+    toggler: Dispatch<SetStateAction<{
+        status: boolean;
+        id: string;
+    }>> 
     handleDelete:Function,
     collection:collection | undefined
 }
 
-export default function DeleteWarning({isWarningVisible,handleDelete,collection}:Props) {
+export default function DeleteWarning({toggler,handleDelete,collection}:Props) {
   return (
     <div className='bg-black bg-opacity-25 backdrop-blur-sm fixed inset-0 flex justify-center items-center w-screen h-screen z-50'>
         <div className='w-full h-full flex items-center justify-center'>
@@ -26,7 +29,7 @@ export default function DeleteWarning({isWarningVisible,handleDelete,collection}
                         Yes
                     </button>
                     <button 
-                        onClick={()=>isWarningVisible(false)} 
+                        onClick={()=>toggler((prev)=>({...prev,status:false,id:""}))} 
                         className='bg-white px-5 rounded-xl text-black border'
                         >
                         Cancel

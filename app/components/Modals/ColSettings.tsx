@@ -1,3 +1,4 @@
+'use client'
 import { storage } from '@/lib/firebase'
 import axios from 'axios'
 import { deleteObject, listAll, ref } from 'firebase/storage'
@@ -5,35 +6,41 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 import { AiOutlineCheck, AiOutlineClose, AiOutlineSound } from 'react-icons/ai'
 import { SlOptionsVertical } from 'react-icons/sl'
-import DeleteWarning from './modals/DeleteWarning'
+import DeleteWarning from './DeleteWarning'
 import {FcShare} from 'react-icons/fc'
 import { useDispatch, useSelector } from 'react-redux'
 import { createAlert } from '@/redux/alertSlice'
 import { RootState } from '@/redux/store'
 import { IoVolumeMuteOutline } from 'react-icons/io5'
+import ManageAccess from './ManageAccess'
+import Finder from './Finder'
+import { updateCollectionId } from '@/redux/collectionSlice'
+import { useDataContext } from '../Providers/DataContextProvider'
+import { deleteCollection, revokeAcces } from '@/utils/handlers'
 
 
 type Props = {
-    promise:Promise<collection>,
-    refetchColRef:Function,
-    isFinderVisible:Function,
-    isManageAccessVisible:Function
+  collection:collection
 }
 
-export default function ColSettings({promise,refetchColRef,isFinderVisible,isManageAccessVisible}:Props) {
+export default function ColSettings({collection}:Props) {
+    const { shakeData } = useDataContext()
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     const accessData = useSelector((state:RootState)=>state.collectionReducer.collection.accessData)
     const owner = useSelector((state:RootState)=>state.collectionReducer.collection.owner)
-    const refetch = refetchColRef
+   
     const router = useRouter()
     const dispatch = useDispatch()
     
-    const [collection,setCollection] = useState<collection>()
+    const [openFinder,setOpenFinder] = useState(false)
+    const [openMngAcces,setOpenMngAcces] = useState(false)
+    const [isWarningVisible,setIsWarningVisible] = useState(false)
+    
     const [newName,setNewName] = useState("")
     const [colOptions,setColOptions] = useState(false)
     const [colNameEdit,setColNameEdit] = useState(false)
-    const [isWarningVisible,setIsWarningVisible] = useState(false)
     const [colMuted,setColMuted] = useState(false)
+
     //tooltip
     const [shareInfo,setShareInfo] = useState(false)
 
@@ -49,20 +56,14 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
             ))
         }
     }
-    
-    
-    //MODAL 3
-    function handleWarning(status:boolean){
-        if(status) setIsWarningVisible(true)
-        if(!status) setIsWarningVisible(false)
-    }
+
 
     async function handleName(){
         try {
-          await axios.patch(`/api/user/collections/${session?._id}/${collection?._id}`,{newName:newName})
-          setColNameEdit(false)
-          collection!.name = newName
-          refetch(true)
+            await axios.patch(`/api/user/collections/${session?._id}/${collection?._id}`,{newName:newName})
+            setColNameEdit(false)
+            collection!.name = newName
+            shakeData()    
         } catch (error) {
           console.log(error)
         }
@@ -90,29 +91,25 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
                     await deleteObject(matchingAllFileRef)
                 }
             }))
-            router.push('/dashboard')
+            router.push(`/dashboard/session/${session._id}`)
             dispatch(createAlert({type:'info',text:res.data}))
         } catch (error:any) {
         
         }
     }
 
-    //FETCH COLLECTION FROM PASSED PROMISE
-    useEffect(()=>{
-        async function fetchCol(){
-            const collection = await promise
-            setCollection(collection)
-
-            //Decide if collection is muted for icon reference.
-            const mutedArray = await axios.get(`/api/user/getMutedCols/${session._id}`)
-            if(mutedArray.data.includes(collection._id)){
-                setColMuted(true)
-            }else{
-                setColMuted(false)
-            }
+    async function handleMuteCollection(action:string,userId:string,collectionId:string){
+        await axios.post(`/api/user/handleNotifications/${session._id}`,{
+            action:action,collectionId:collectionId
+        })
+        if(action === 'mute'){
+            setColMuted(true)
+        }else{
+            setColMuted(false)
         }
-        fetchCol()
-    },[])
+    }
+
+    // Outside-click handler
     const containerInnerRef = useRef<HTMLDivElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
     useEffect(()=>{
@@ -130,18 +127,25 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
         window.removeEventListener("mousedown", handleOutSideClick);
         };
     },[containerRef,containerInnerRef])
-    
-    async function handleMuteCollection(action:string,userId:string,collectionId:string){
-        await axios.post(`/api/user/handleNotifications/${session._id}`,{
-            action:action,collectionId:collectionId
-        })
-        if(action === 'mute'){
-            setColMuted(true)
-        }else{
-            setColMuted(false)
-        }
-    }
 
+    useEffect(()=>{
+        dispatch(updateCollectionId({collectionId:collection._id}))
+    },[collection])
+    
+    useEffect(()=>{
+        async function decideMute(){
+            //Decide if collection is muted for icon reference.
+            const mutedArray = await axios.get(`/api/user/getMutedCols/${session._id}`)
+            if(mutedArray.data.includes(collection._id)){
+                setColMuted(true)
+            }else{
+                setColMuted(false)
+            }
+        }
+        decideMute()
+    },[collection])
+
+    
     return (
     <div className="relative flex items-center justify-between">
         {colNameEdit ? 
@@ -169,7 +173,6 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
                     <div className='flex items-center gap-3'>
                         <div className='group'>
                             <h1 className="grouptext-black text-xl group cursor-pointer">{collection && collection?.name}</h1>
-                            <p className='group-hover:block hidden absolute rounded-xl shadow-xl bg-white px-2'>Name</p>
                         </div>
                         {colMuted ? 
                             <IoVolumeMuteOutline 
@@ -224,22 +227,29 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
                     >
                     Edit name
                 </p>
+                {!owner?.isOwner&& 
+                 <p 
+                    onClick={()=>revokeAcces(collection.owner,session._id,collection._id).then(()=>router.push(`/dashboard/session/${session._id}`))}
+                    className='text-red-500 hover:bg-slate-100 cursor-pointer'
+                >
+                    Leave collection
+                </p>}
                 {owner?.isOwner && 
                     <>
                         <p 
-                            onClick={()=>isFinderVisible(true)} 
+                            onClick={()=>setOpenFinder(true)} 
                             className="hover:bg-slate-100 cursor-pointer w-full h-full"
                             >
                             Share collection
                         </p>
                         <p 
-                            onClick={()=>isManageAccessVisible(true)} 
+                            onClick={()=>setOpenMngAcces(true)} 
                             className="hover:bg-slate-100 cursor-pointer w-full h-full"
                             >
                             Manage access
                         </p>
                         <p 
-                            onClick={()=>setIsWarningVisible(true)} 
+                            onClick={()=>deleteCollection(session._id,collection._id).then(()=>router.push(`/dashboard/session/${session._id}`))} 
                             className="hover:bg-slate-100 cursor-pointer w-full h-full text-red-600"
                             >
                             Delete collection
@@ -248,12 +258,16 @@ export default function ColSettings({promise,refetchColRef,isFinderVisible,isMan
                 }
             </div>
         }
-        {isWarningVisible &&
-            <DeleteWarning 
-                handleDelete={handleRemoveCol} 
-                isWarningVisible={handleWarning}
-                collection={collection}
+        {openFinder && 
+            <Finder 
+                toggler={setOpenFinder}
+                userId={session._id}
             />
+        }
+        {openMngAcces && 
+            <ManageAccess
+                toggler={setOpenMngAcces}
+            /> 
         }
     </div>
   )

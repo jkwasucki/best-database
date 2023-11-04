@@ -1,4 +1,4 @@
-import LoaderSVG from '@/app/dashboard/components/svgs/LoaderSVG';
+import LoaderSVG from '@/app/components/svgs/LoaderSVG';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { AiFillCloseCircle, AiOutlineQuestionCircle } from 'react-icons/ai'
@@ -6,21 +6,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createAlert } from '@/redux/alertSlice';
 import { RootState } from '@/redux/store';
 import { motion } from 'framer-motion';
+import { useDataContext } from '../Providers/DataContextProvider';
 
 
 type Props = {
-    isFinderVisible:Function,
-    refetchColRef:Function,
+    toggler:React.Dispatch<React.SetStateAction<boolean>>
     userId:string,
 }
 
 //MODAL COMPONENT
-export default function Finder({isFinderVisible,refetchColRef,userId}:Props) {
+export default function Finder({toggler,userId}:Props) {
+    const { shakeData } = useDataContext()
     const collectionId = useSelector((state:RootState)=>state.collectionReducer.collection.collectionId)
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     
     const dispatch = useDispatch()
-    const refetch = refetchColRef
+
 
     const [isTooltipVisible, setTooltipVisible] = useState(false);
     const [searchValue,setSearchValue] = useState('')
@@ -31,7 +32,7 @@ export default function Finder({isFinderVisible,refetchColRef,userId}:Props) {
 
   const handleTooltipToggle = () => {
     setTooltipVisible(!isTooltipVisible);
-  };
+  }
 
 
   //Dynamic search while typing
@@ -63,7 +64,7 @@ export default function Finder({isFinderVisible,refetchColRef,userId}:Props) {
     
             setSearchValue("")
             setResultUser(undefined)
-            refetch(true)
+            shakeData()
         } catch (error) {
             console.log(error) 
         }
@@ -81,7 +82,7 @@ export default function Finder({isFinderVisible,refetchColRef,userId}:Props) {
             >
             <div className='relative w-[300px] bg-white rounded flex flex-col p-5 gap-3'>
                 <AiFillCloseCircle 
-                    onClick={()=>isFinderVisible(false)}  
+                    onClick={()=>toggler(false)}  
                     size={20} 
                     className='text-red-500 ml-auto cursor-pointer'
                 />

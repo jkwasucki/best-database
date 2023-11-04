@@ -7,19 +7,19 @@ import { createAlert } from '@/redux/alertSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { motion, useAnimation } from "framer-motion";
+import { useDataContext } from '../Providers/DataContextProvider';
 
 
 type Props = {
-    isManageAccessVisible:Function,
-    refetchColRef:Function
+    toggler:React.Dispatch<React.SetStateAction<boolean>>
 };
 
-export default function ManageAcces({isManageAccessVisible,refetchColRef }: Props) {
+export default function ManageAcces({toggler}: Props) {
+    const { shakeData } = useDataContext()
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     const collectionId = useSelector((state:RootState)=>state.collectionReducer.collection.collectionId)
     const partyData = useSelector((state:RootState)=>state.collectionReducer.collection.partyData)
 
-    const refetch = refetchColRef
     const dispatch = useDispatch()
 
 
@@ -64,7 +64,7 @@ export default function ManageAcces({isManageAccessVisible,refetchColRef }: Prop
                       isOn: !prevToggle.download.isOn,
                     },
                 }));
-                refetch(true)
+                shakeData()
             }else if(right === 'upload'){
                 setToggle((prevToggle) => ({
                     ...prevToggle,
@@ -73,7 +73,7 @@ export default function ManageAcces({isManageAccessVisible,refetchColRef }: Prop
                       isOn: !prevToggle.upload.isOn,
                     },
                 }));
-                refetch(true)
+                shakeData()
             }else if(right === 'rename'){
                 setToggle((prevToggle) => ({
                     ...prevToggle,
@@ -82,7 +82,7 @@ export default function ManageAcces({isManageAccessVisible,refetchColRef }: Prop
                       isOn: !prevToggle.rename.isOn,
                     },
                 }));
-                refetch(true)
+                shakeData()
             }else if(right === 'delete'){
                 setToggle((prevToggle) => ({
                     ...prevToggle,
@@ -91,7 +91,7 @@ export default function ManageAcces({isManageAccessVisible,refetchColRef }: Prop
                       isOn: !prevToggle.delete.isOn,
                     },
                 }));
-                refetch(true)
+                shakeData()
             }
             
         } catch (error) {
@@ -105,7 +105,7 @@ export default function ManageAcces({isManageAccessVisible,refetchColRef }: Prop
                 invitedId:invitedId
             })
             dispatch(createAlert({type:"info",text:"User has been removed."}))
-            refetch(true)
+            shakeData()
         } catch (error:any) {
             dispatch(createAlert({type:"warning",text:error.response.data}))
         }
@@ -122,7 +122,7 @@ export default function ManageAcces({isManageAccessVisible,refetchColRef }: Prop
                 <div className='relative flex flex-col bg-white w-max sm:w-[400px] sm:max-h-[500px] sm:h-max p-5 gap-3 overflow-hidden rounded items-center'>
                     <p className='text-xl font-bold'>Access manager</p>
                     <AiFillCloseCircle
-                        onClick={()=>isManageAccessVisible(false)}
+                        onClick={()=>toggler(false)}
                         className='text-red-500 absolute right-5 cursor-pointer'
                     />
                     {usersCount === 0 ?

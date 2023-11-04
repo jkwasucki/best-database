@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useRef, useState } from 'react'
 import { SlOptions } from 'react-icons/sl'
 import { createAlert } from '@/redux/alertSlice'
@@ -9,15 +10,18 @@ import {VscFiles} from 'react-icons/vsc'
 import { MdInsertPhoto, MdMovie } from 'react-icons/md'
 import { BsFileEarmarkMusicFill, BsFileEarmarkText } from 'react-icons/bs'
 import { motion } from 'framer-motion'
+import FileViewer from './FileViewer'
+import { useDataContext } from '../Providers/DataContextProvider'
+import { useRouter } from 'next/navigation'
 
 type Props = {
-    promise:Promise<mongoFileRef[]>
-    refetchFilesRef:Function,
-    isfileViewerVisible:Function
+    files:mongoFileRef[]
 }
 
 
-export default function Files({promise,refetchFilesRef,isfileViewerVisible}:Props) {
+export default function Files({files}:Props) {
+    const { shouldRefetchData,shakeData } = useDataContext()
+    
     const referencedFile = useSelector((state:RootState)=>state.fileReducer.file)
     const referencedFileFor = useSelector((state:RootState)=>state.fileReducer.for)
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
@@ -27,32 +31,29 @@ export default function Files({promise,refetchFilesRef,isfileViewerVisible}:Prop
   
     const targetFileRef = useRef(null);
     const dispatch = useDispatch()
-    const refetch = refetchFilesRef
+    const router = useRouter()
 
-    const [files,setFiles] = useState<mongoFileRef[]>()
     const [fileOptions,setFileOptions] = useState({
         status:false,
         _id:""
     })
-    const [componentReRender, setComponentReRender] = useState(0)
-    
-    function handleComponentReRender(){
-      setComponentReRender(componentReRender + 1)
-    }
+
+    const [isfileViewerVisible,setIsfileViewerVisible] = useState(false)
+  
 
     function handleViewer(file:mongoFileRef){
         dispatch(referenceFile({file:file,for:"fileViewer"}))
-        isfileViewerVisible(true)
+        setIsfileViewerVisible(true)
     }
+
     //PERMISSION CHECKERS
     //1.1
     function deleteAccessCheck(file:mongoFileRef){
       if(owner.isOwner || accessData.canDelete){
      
         handleDelete(file,session._id,collectionId).then(()=>{
-            refetch(true)
             setFileOptions((prev) => ({ ...prev, status: false, _id: "" }))
-            handleComponentReRender()
+            shakeData()
         })
       }else{
         dispatch(createAlert(
@@ -71,14 +72,7 @@ export default function Files({promise,refetchFilesRef,isfileViewerVisible}:Prop
       }
     }
   
-    //Catch passed files promise
-    useEffect(() => {
-      async function catchFiles() {
-        const files = await promise;
-        setFiles(files);
-      }
-      catchFiles();
-    }, [promise]);
+   
       
     //Handle file icons
     function handleIcons(file:mongoFileRef){
@@ -122,11 +116,14 @@ export default function Files({promise,refetchFilesRef,isfileViewerVisible}:Prop
         }
     }, [files, referencedFileFor]);
 
+    useEffect(()=>{
+        router.refresh()
+    },[shouldRefetchData])
 
 return (
     <div className='overflow-y-auto w-full h-full pt-5'>
-        {files?.length! > 0 ? (
-        files!.map((file) => (
+        {files.length > 0 ? (
+        files.map((file) => (
             <div
                 className='relative flex items-center'
                 ref={referencedFileFor === 'scrollInView' && file._id === referencedFile._id ? targetFileRef : null}
@@ -134,23 +131,24 @@ return (
                 >
                 {fileOptions._id === file._id && fileOptions.status && (
                     <div
+                        ref={containerRef} 
                         className="absolute py-2 right-11 shadow border bg-white z-20 sm:w-[150px] rounded-xl"
                     >
                         <p
                             onClick={() => downloadAccessCheck(file)}
-                            className="hover:bg-slate-100"
+                            className="hover:bg-slate-100 cursor-pointer"
                         >
                             Download
                         </p>
                         <p
                             onClick={() => deleteAccessCheck(file)}
-                            className="hover:bg-slate-100"
+                            className="hover:bg-slate-100 cursor-pointer"
                         >
                             Delete
                         </p>
                     </div>
                 )}
-                <div className={`${referencedFileFor === 'scrollInView' && referencedFile._id === file._id && 'bg-blue-100'} relative w-full flex justify-between items-center h-[80px] sm:h-12 px-4 border-l-transparent border-r-transparent border-t-black border-b-black hover:bg-neutral-100 rounded-xl cursor-pointer`}>
+                <div className={`${referencedFileFor === 'scrollInView' && referencedFile._id === file._id && 'bg-blue-100'} relative w-full flex justify-between items-center h-[80px] sm:h-12 px-4 border-l-transparent border-r-transparent border-t-black border-b-black hover:bg-slate-200 rounded-xl cursor-pointer`}>
                     <div onClick={() => handleViewer(file)} className="flex items-center gap-1 w-1/3">
                         {handleIcons(file)}
                         <p className="sm:max-w-[300px] max-w-[100px] truncate">{file.name}</p>
@@ -160,7 +158,6 @@ return (
                         <p className='text-sm sm:text-md'>{new Date(file.createdAt).toLocaleString().split(',').shift()}</p>
                     </div>
                     <div
-                        ref={containerRef} 
                         className="relative w-1/3 flex justify-end"
                         >
                         <SlOptions
@@ -187,6 +184,12 @@ return (
                 <VscFiles size={55}/>
         </motion.div>
         )}
+         {isfileViewerVisible &&  
+            <FileViewer
+                files={files}
+                toggler={setIsfileViewerVisible}
+            />
+        }
     </div>
 )
 }

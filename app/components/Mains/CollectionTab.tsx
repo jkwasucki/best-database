@@ -1,4 +1,4 @@
-import getCollections from '@/utils/getCollections';
+'use client'
 import { useEffect, useState } from 'react';
 import { IoAdd } from 'react-icons/io5';
 import { LuTrash } from 'react-icons/lu';
@@ -10,30 +10,28 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createAlert } from '@/redux/alertSlice';
 import { RootState } from '@/redux/store';
 import { SiAiqfome } from 'react-icons/si';
-import CreateCollection from './modals/CreateCollection';
+import CreateCollection from '../Modals/CreateCollection';
 import { BsFolder, BsFolderFill } from 'react-icons/bs';
-import DeleteWarning from '../collections/[userId]/[collectionId]/components/modals/DeleteWarning';
+import DeleteWarning from '../Modals/DeleteWarning';
+import { useRouter } from 'next/navigation';
+import { useDataContext } from '../Providers/DataContextProvider';
+import { clearCollectionData } from '@/redux/collectionSlice';
+import { referenceFile } from '@/redux/fileSlice';
 
 type Props = {
-  refetchRef: Function;
-};
+    collections:collection[]
+ }
+ 
 
-interface onEvent {
-  onEvent: () => void;
-}
 
-export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) {
+
+export default function CollectionTab({ collections }: Props) {
     const dispatch = useDispatch()
-    const refetch = refetchRef;
-
+    const router = useRouter()
+    const { shouldRefetchData,shakeData } = useDataContext()
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
 
-
-    const [collections, setCollections] = useState<collection[]>([]);
-    const [internalRefetch, setInternalRefetch] = useState(false);
-
-
-
+    const [add, setAdd] = useState(false)
     const [shareInfo,setShareInfo] = useState({
         active:false,
         collectionId:""
@@ -42,25 +40,22 @@ export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) 
     const [info, setInfo] = useState({
         active: false,
         text: "There are no collections yet.",
-    });
-
-    const [add, setAdd] = useState(false)
+    })
 
     const [isWarningVisible, setIsWarningVisible] = useState({
         status:false,
         id:""
     })
 
-    function handleModal(status:boolean){
-        if(!status) setAdd(false)
-    }
-
-    function handleWarning(status:boolean){
-        if(!status) setIsWarningVisible((prev)=>({...prev,status:false,id:''}))
-    }
 
     async function handleDelete(collection: collection) {
         try {
+            if(collection.owner !== session._id){
+                await axios.post(`/api/user/collections/revokeAccess/${session?._id}/${collection._id}`,{
+                    invitedId:session._id
+            })
+        }
+
         await axios.delete(`/api/user/collections/${session?._id}/${collection._id}`);
 
         const collectionRef = ref(storage, `files/${session?._id}/col+${collection._id}`);
@@ -71,62 +66,36 @@ export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) 
         // Delete each file in the directory
         await Promise.all(
             files.items.map(async (fileRef) => {
-            const filename = fileRef.name;
+                const filename = fileRef.name;
 
-            await deleteObject(fileRef);
+                await deleteObject(fileRef);
 
-            // Find and delete the file from allFiles if it exists
-            const matchingAllFileRef = allFiles.items.find((allFileRef) => allFileRef.name === filename);
+                // Find and delete the file from allFiles if it exists
+                const matchingAllFileRef = allFiles.items.find((allFileRef) => allFileRef.name === filename);
 
-            if (matchingAllFileRef) {
-                await deleteObject(matchingAllFileRef);
-            }
+                if (matchingAllFileRef) {
+                    await deleteObject(matchingAllFileRef);
+                }
             })
-        ).then(() => {
-            refetch(true);
-        });
-
-        onEvent();
-        setInternalRefetch(true);
-
+        )
+        shakeData()
         dispatch(createAlert({type:"info",text:"Colletion has been deleted."}))
 
         } catch (error: any) {
-        console.log(error.response.data.error);
+            console.log(error.response.data.error);
         }
     }
 
-    //Fetch collections
-    useEffect(() => {
-        async function fetchCollections() {
-        if(session._id.length > 3){
-            try {
-            const collectionData: Promise<collection[]> = getCollections(session._id);
-            const preCollections = await collectionData;
-    
-            if (preCollections.length === 0) {
-                setInfo((prevInfo) => ({
-                ...prevInfo,
-                active: true,
-                }));
-                setCollections([]);
-            } else {
-                setInfo((prevInfo) => ({
-                ...prevInfo,
-                active: false,
-                }));
-                setCollections(preCollections);
-            }
-            setInternalRefetch(false);
-            } catch (error: any) {
-            console.log(error);
-            }
-        }
-        
-        }
-        fetchCollections();
-    }, [session, refetch, internalRefetch]);
+    //On every render, clear any previous col data
+    useEffect(()=>{
+        dispatch(clearCollectionData({}))
+        dispatch(referenceFile({}))
+    },[])
 
+    useEffect(()=>{
+        router.refresh()
+    },[shouldRefetchData])
+ 
     return (
         <div className="flex flex-col gap-4 h-full overflow-y-hidden">
             <div className="relative flex items-center gap-5 select-none w-[300px]">
@@ -137,8 +106,7 @@ export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) 
                 />
                 {add &&
                     <CreateCollection 
-                        isModalVisible={handleModal} 
-                        refetchRef={refetchRef}
+                        toggler={setAdd} 
                     />
                 }
             </div>
@@ -155,7 +123,7 @@ export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) 
                             return (
                                 <div
                                     key={collection._id}
-                                    className='relative flex items-center justify-between gap-3 px-2 hover:bg-slate-100 py-2 font-semibold cursor-pointer rounded'
+                                    className='relative flex items-center justify-between gap-3 px-2 hover:bg-slate-200 py-2 font-semibold cursor-pointer rounded'
                                     >
                                     <Link
                                         href={`/dashboard/collections/${session?._id}/${collection._id}`}
@@ -213,7 +181,7 @@ export default function CollectionTab({ onEvent, refetchRef }: onEvent & Props) 
                                     isWarningVisible.id === collection._id && 
                                         <DeleteWarning 
                                             handleDelete={handleDelete} 
-                                            isWarningVisible={handleWarning}
+                                            toggler={setIsWarningVisible}
                                             collection={collection}
                                         />
                                     }

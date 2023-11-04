@@ -58,5 +58,5 @@ export async function handleDelete(file:mongoFileRef,userId:string,collectionId:
         naturalHeight: customMetadata?.naturalHeight,
       };
 
-      await axios.post(`/api/user/addFileDataToMongo/${userId}/${collectionId}`,{...uploadedFileMetadata})
+      await axios.post(`http://localhost:3000/api/user/addFileDataToMongo/${userId}/${collectionId}`,{...uploadedFileMetadata})
   };

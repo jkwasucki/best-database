@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { MdMovie } from 'react-icons/md'
 import {ImFileText2} from 'react-icons/im'
 import {MdInsertPhoto} from 'react-icons/md'
@@ -8,34 +8,24 @@ import{BsFileEarmarkMusicFill, BsFileEarmarkText} from 'react-icons/bs'
 import Image from 'next/image'
 import { useDispatch, useSelector } from 'react-redux'
 import { referenceFile } from '@/redux/fileSlice'
-import LoaderSVG from './svgs/LoaderSVG'
 import axios from 'axios'
 import { RootState } from '@/redux/store'
 import { useRouter } from 'next/navigation'
+import { useDataContext } from '../Providers/DataContextProvider'
 
 
 
 
 type Props = {
-  promise:Promise<mongoFileRef[]>,
+  files:mongoFileRef[],
 }
 
-export default function File({promise}:Props) {
+export default function FilePrevs({files}:Props) {
+    const { shouldRefetchData } = useDataContext()
     const dispatch = useDispatch()
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     const router = useRouter()
 
-
-    const [fileData,setFileData] = useState<mongoFileRef[]>()
-
-    //Catch files promise
-    useEffect(()=>{
-      async function catchFiles(){
-        const fileData = await promise
-        setFileData(fileData)
-      }
-     catchFiles()
-    },[promise])
 
     async function handleRedirect(file:mongoFileRef){
       const extractedCollectionId = file.fullPath.match(/col\+(.*?)\//)!;
@@ -59,14 +49,19 @@ export default function File({promise}:Props) {
       }
     }
 
+    
+    useEffect(()=>{
+      router.refresh()
+  },[shouldRefetchData])
+
   return (
     <>
-    {fileData && fileData?.length === 0 &&
+    {files && files?.length === 0 &&
       <div className='w-full h-full flex justify-center items-center text-center'>
         <p className='text-black opacity-50'>Upload files to see their previews.</p>
       </div> 
     }
-    {fileData ? fileData.map(file=>{
+    {files && files.map(file=>{
         return (
           <div 
             onClick={()=>handleRedirect(file)} 
@@ -123,8 +118,6 @@ export default function File({promise}:Props) {
           </div>
           )
         })
-        : 
-        <LoaderSVG size={50}/>
         }
        
     </>

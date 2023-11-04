@@ -4,7 +4,6 @@ import { UploadMetadata, ref, uploadBytesResumable } from "firebase/storage";
 import {AiOutlinePlus} from 'react-icons/ai'
 import { IoMdArrowDropdown } from 'react-icons/io';
 import { storage } from '@/lib/firebase';
-import getCollections from '@/utils/getCollections';
 import axios from 'axios';
 import mime from 'mime-types'
 import { BsFolder } from 'react-icons/bs';
@@ -15,35 +14,33 @@ import { useSelector } from 'react-redux';
 import { fetchMetadata } from '@/utils/functions';
 import { motion } from 'framer-motion';
 import { TbReload } from 'react-icons/tb';
+import { useDataContext } from '../Providers/DataContextProvider';
+
 
 
 
 type Props = {
-    refetchRef:Function,
+   collections:collection[]
 }
 
 
 
-export default function Upload ({refetchRef}:Props) {
+export default function Upload ({collections}:Props) {
+    const { shakeData } = useDataContext()
+
     const session = useSelector((state:RootState)=>state.persistedUserReducer.user)
     const owner = useSelector((state:RootState)=>state.collectionReducer.collection.owner)
     const collectionId = useSelector((state:RootState)=>state.collectionReducer.collection.collectionId)
     const accessData = useSelector((state:RootState)=>state.collectionReducer.collection.accessData)
     
     const dispatch = useDispatch()
-    const refetch = refetchRef
 
-    const [internalRefetch,setInternalRefetch] = useState(0)
     const [uploadProgress,setUploadProgress] = useState(0)
-    
-    function runInternalRefetch(){
-        setInternalRefetch(internalRefetch + 1)
-    }
 
     const [newColName,setNewColName] = useState("")
     const [colNameInit,setColNameInit] = useState(false)
     const [colId,setColId] = useState("")
-    const [collections,setCollections] = useState<collection[]>([])
+    const [filteredCols,setFilteredCols] = useState<collection[]>([])
     const [button, setButton] = useState(false);
     
 
@@ -71,8 +68,8 @@ export default function Upload ({refetchRef}:Props) {
                 await axios.post(`/api/user/collections/${session?._id}`,{
                     "collection":newColName
                 })
-                refetch(true)
-                runInternalRefetch()
+                setNewColName("")
+                shakeData()
             } catch (error:any) {
                 //
             }
@@ -158,7 +155,7 @@ export default function Upload ({refetchRef}:Props) {
                     const storageReference = ref(storage, `/files/${session._id}/col+${colId}/${selectedFile.name}`);
                     await fetchMetadata(storageReference,session._id,colId);
                     dispatch(createAlert({type:"info",text:"File has been uploaded."}))
-                    refetch!(true)
+                    shakeData()
                     setButton(false)
                 }catch(error:any){
                     dispatch(createAlert({type:"warning",text:error.response.data}))
@@ -191,7 +188,7 @@ export default function Upload ({refetchRef}:Props) {
                     const storageReference = ref(storage, `/files/${session._id}/col+${colId}/${selectedFile.name}`);
                     await fetchMetadata(storageReference,session._id,colId);
                     dispatch(createAlert({type:"info",text:"File has been uploaded."}))
-                    refetch!(true)
+                    shakeData()
                     setButton(false)
                 }catch(error:any){
                     dispatch(createAlert({type:"warning",text:error.response.data}))
@@ -202,21 +199,10 @@ export default function Upload ({refetchRef}:Props) {
     
     //Fetch avaiable collections (drop-down)
     useEffect(()=>{
-        async function fetchCollections(){
-            if(session?._id.length > 1){
-                try {
-                    const collectionData:Promise<collection[]> =  getCollections(session?._id)
-                    const preCollections = await collectionData
-                    const filteredCols = preCollections?.filter((col)=>col.owner === session?._id)
-                    setCollections(filteredCols)
-                   
-                } catch (error:any) {
-                    console.error(error)
-                }
-            }
-        }
-        fetchCollections()
-    },[internalRefetch,session])
+        const filteredCols = collections?.filter((col:any)=>col.owner === session?._id)
+        setFilteredCols(filteredCols)
+    },[collections])
+    
 
 return (
     <div    
@@ -261,18 +247,17 @@ return (
                 />
                 <div className='flex justify-between items-center mr-2'>
                     <p className='mb-2'>Upload to:</p>
-                    <TbReload onClick={()=>runInternalRefetch()} className='cursor-pointer'/>
                 </div>
                 <div className='gap-3 max-h-[190px] overflow-y-auto'>
-                    {collections.length > 0 ? (
+                    {filteredCols.length > 0 ? (
                         collections
                         .slice()
-                        .sort((a, b) => {
+                        .sort((a:any, b:any) => {
                             if (a._id === collectionId) return -1; // "This collection" comes first
                             if (b._id === collectionId) return 1;  // "This collection" comes first
                             return a.name.localeCompare(b.name);  // Sort alphabetically by name
                         })
-                        .map((col) => (
+                        .map((col:any) => (
                             <label key={col._id} htmlFor='files' className='flex items-center gap-2 hover:bg-slate-100 w-full h-full cursor-pointer'>
                                 <div 
                                     onClick={() => setColId(col._id)} 

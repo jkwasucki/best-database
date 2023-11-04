@@ -1,4 +1,4 @@
-import Link from 'next/link'
+
 import {SiAiqfome} from 'react-icons/si'
 export default async function NotFound() {
   return (

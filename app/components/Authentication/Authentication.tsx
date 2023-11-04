@@ -9,7 +9,7 @@ import {RiLockPasswordLine} from 'react-icons/ri'
 import { FcGoogle } from 'react-icons/fc'
 import { createAlert } from '@/redux/alertSlice'
 import { useDispatch } from 'react-redux'
-import LoaderSVG2 from "../dashboard/components/svgs/LoaderSVG2"
+import LoaderSVG2 from "../svgs/LoaderSVG2"
 
 export default function Authentication() {
     const dispatch = useDispatch()
@@ -33,7 +33,7 @@ export default function Authentication() {
                     })
                     setBuffer('stop')
                     dispatch(createSession(user.data))
-                    router.push("/dashboard")
+                    router.push(`/dashboard/session/${user.data._id}`)
                 }catch(error:any){
                     setBuffer('stop')
                     console.log(error.response)
